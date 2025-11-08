@@ -4,7 +4,14 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 
-app = Flask(__name__)
+app = Flask(__name__) 
+
+@app.route('/')
+def home():
+    return "LINE天気Bot稼働中！"
+
+
+
 
 LINE_CHANNEL_ACCESS_TOKEN = "lNN3PhUSK2F4W9Nz24xpw6roqdeDvw3SPLhyM5r7tbK936XrX3bW/J1qUCRnneY2CBO2JxsBerhzvaG1InKHLK/FVOCnovBXsFgrtqEq2mjv9d9C+InT8mwr9hPWUXSJ9eHrKL8RHCd8QCq+xYLzAgdB04t89/1O/w1cDnyilFU="
 LINE_CHANNEL_SECRET = "2faec8027320d6b0f80fc817bc351f34"
