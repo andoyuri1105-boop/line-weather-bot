@@ -1,0 +1,64 @@
+from flask import Flask
+import requests
+from datetime import datetime
+from linebot import LineBotApi
+from linebot.models import TextSendMessage
+from apscheduler.schedulers.background import BackgroundScheduler
+
+# === あなたの情報 ===
+LINE_ACCESS_TOKEN = "lNN3PhUSK2F4W9Nz24xpw6roqdeDvw3SPLhyM5r7tbK936XrX3bW/J1qUCRnneY2CBO2JxsBerhzvaG1InKHLK/FVOCnovBXsFgrtqEq2mjv9d9C+InT8mwr9hPWUXSJ9eHrKL8RHCd8QCq+xYLzAgdB04t89/1O/w1cDnyilFU="
+API_KEY = "bce0dd5f4f0105d0aad1504b3ff98d8d"
+LAT = 43.1143   # 緯度（例：札幌市北区麻生町）
+LON = 141.3392  # 経度
+USER_ID = "U6d2eb8e5dc1ce12677f9bd247a30f70d"
+
+# Flaskアプリを作成
+app = Flask(__name__)
+
+# LINE Bot APIを初期化
+line_bot_api = LineBotApi(LINE_ACCESS_TOKEN)
+
+
+# --- 天気を取得してLINEに送信 ---
+def send_weather():
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={LAT}&lon={LON}&appid={API_KEY}&units=metric&lang=ja"
+    response = requests.get(url)
+    data = response.json()
+
+    if response.status_code != 200 or "weather" not in data:
+        print("⚠️ 天気情報の取得に失敗しました:", data)
+        return
+
+    weather = data["weather"][0]["description"]
+    temp = data["main"]["temp"]
+    temp_min = data["main"]["temp_min"]
+    temp_max = data["main"]["temp_max"]
+
+    message = (
+        f"【札幌市北区麻生町の天気】\n"
+        f"天気：{weather}\n"
+        f"現在の気温：{temp}℃\n"
+        f"最低気温：{temp_min}℃\n"
+        f"最高気温：{temp_max}℃\n"
+        f"（{datetime.now().strftime('%H:%M')} 時点）"
+    )
+
+    line_bot_api.push_message(USER_ID, TextSendMessage(text=message))
+    print("✅ 天気情報を送信しました！")
+
+
+# --- スケジューラー設定（毎朝7:30実行） ---
+scheduler = BackgroundScheduler(daemon=True)
+scheduler.add_job(send_weather, "cron", hour=7, minute=30)
+scheduler.start()
+
+
+# --- Flaskルート（Renderで動かすために必要） ---
+@app.route("/")
+def home():
+    return "LINE天気Botが稼働中です！"
+
+
+# --- 実行 ---
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
